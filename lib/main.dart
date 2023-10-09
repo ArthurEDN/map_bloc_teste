@@ -129,18 +129,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin{
               ),
               BlocListener<LocationPermissionsBloc, LocalPermissionStatusState>(
                 listenWhen: (previous, next){
-                  print("LocationPermissionsBloc${previous.status}");
-                  print("LocationPermissionsBloc${next.status}");
                   if(next.status == LocationPermissionsStatus.always || next.status == LocationPermissionsStatus.whileInUse){
                     return true;
                   }
                   return false;
                 },
                 listener: (context, state) {
-                  print("LocationPermissionsBlocListener");
-                  print(BlocProvider.of<LocationServiceStatusBloc>(context).locationServiceStatusValue);
                   if(BlocProvider.of<LocationServiceStatusBloc>(context).locationServiceStatusValue == LocationServiceStatus.enabled){
-                    print("LocationPermissionsBlocAdd");
                     BlocProvider.of<UserPositionBloc>(context)
                         .add(const UserPositionSubscriptionStarted());
                   }
@@ -148,16 +143,11 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin{
               ),
               BlocListener<LocationServiceStatusBloc, LocationServiceStatusState>(
                 listenWhen: (previous, next){
-                  print("LocationServiceStatusBloc${previous.status}");
-                  print("LocationServiceStatusBloc${next.status}");
                   return next.status == LocationServiceStatus.enabled;
                 },
                 listener: (context, state){
-                  print("LocationServiceStatusBlocListener");
-                  print(BlocProvider.of<LocationPermissionsBloc>(context).locationPermission);
                   if(BlocProvider.of<LocationPermissionsBloc>(context).locationPermission == LocationPermissionsStatus.always
                      || BlocProvider.of<LocationPermissionsBloc>(context).locationPermission == LocationPermissionsStatus.whileInUse){
-                    print("LocationServiceStatusBlocAdd");
                     BlocProvider.of<UserPositionBloc>(context)
                         .add(const UserPositionSubscriptionStarted());
                   }

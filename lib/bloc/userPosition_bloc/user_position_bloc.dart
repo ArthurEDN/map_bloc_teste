@@ -13,7 +13,7 @@ part 'user_position_event.dart';
 part 'user_position_state.dart';
 
 class UserPositionBloc extends Bloc<UserPositionEvent, UserPositionState> {
-  LatLngEntity? _lastUserPosition;
+  late LatLngEntity? _lastUserPosition;
 
   UserPositionBloc() : super(const UserPositionInitialState()) {
     on<UserPositionSubscriptionStarted>((event, emit) async{
@@ -42,7 +42,7 @@ class UserPositionBloc extends Bloc<UserPositionEvent, UserPositionState> {
           }
           return UserPositionFailureState(
             userPositionException: LocationRetrieveCustomException(),
-            message: 'Ocorreu um erro no serviço de localização.',
+            message: 'Ocorreu um erro no serviço de localização, as informações podem estar desatualizadas.',
           );
         },
       );
@@ -56,7 +56,7 @@ class UserPositionBloc extends Bloc<UserPositionEvent, UserPositionState> {
     //       ),
     //     );
     //   }
-    //   return emit(UserPositionUpdatedState(userPosition: _lastUserPosition!),);
+    //   return emit(UserPositionRequestedState(userPosition: _lastUserPosition!),);
     // });
   }
 

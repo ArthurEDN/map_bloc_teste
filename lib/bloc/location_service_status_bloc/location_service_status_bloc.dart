@@ -46,15 +46,13 @@ class LocationServiceStatusBloc extends Bloc<LocationServiceStatusEvent, Locatio
       _LocationServiceStatusChanged event,
       Emitter<LocationServiceStatusState> emit,
   ) async {
+    _locationServiceStatus = event.locationServiceStatus;
     switch (event.locationServiceStatus) {
       case LocationServiceStatus.enabled:
-        _locationServiceStatus = event.locationServiceStatus;
         return emit(const LocationServiceStatusState.enabled());
       case LocationServiceStatus.disabled:
-        _locationServiceStatus = event.locationServiceStatus;
         return emit(const LocationServiceStatusState.disabled());
       case LocationServiceStatus.unknown:
-        _locationServiceStatus = event.locationServiceStatus;
         return emit(const LocationServiceStatusState.unknown());
     }
   }
