@@ -16,25 +16,28 @@ class UserPositionBloc extends Bloc<UserPositionEvent, UserPositionState> {
   late LatLngEntity? _lastUserPosition;
 
   UserPositionBloc() : super(const UserPositionInitialState()) {
-    on<UserPositionSubscriptionStarted>((event, emit) async{
+    on<UserPositionSubscriptionStarted>((event, emit) async {
       emit(const UserPositionLoadingState());
       await emit.forEach(
-        geolocator_utils.getGeolocatorUserPositionStream()
-            .map((Position userPosition) => LatLngEntity(latitude: userPosition.latitude, longitude: userPosition.longitude)),
+        geolocator_utils.getGeolocatorUserPositionStream().map(
+            (Position userPosition) => LatLngEntity(
+                latitude: userPosition.latitude,
+                longitude: userPosition.longitude)),
         onData: (LatLngEntity userPosition) {
           _lastUserPosition = userPosition;
           return UserPositionUpdatedState(userPosition: _lastUserPosition!);
         },
-        onError: (error, stackTrace){
+        onError: (error, stackTrace) {
           debugPrint(error.toString());
           debugPrint(stackTrace.toString());
-          if(error is LocationServiceDisabledException){
+          if (error is LocationServiceDisabledException) {
             return UserPositionFailureState(
               userPositionException: LocationServiceDisabledCustomException(),
-              message: 'O serviço de localização no dispositivo está desativado.',
+              message:
+                  'O serviço de localização no dispositivo está desativado.',
             );
           }
-          if(error is PermissionDeniedException){
+          if (error is PermissionDeniedException) {
             return UserPositionFailureState(
               userPositionException: PermissionsDeniedCustomException(),
               message: 'O acesso à localização do dispositivo foi negada.',
@@ -42,7 +45,7 @@ class UserPositionBloc extends Bloc<UserPositionEvent, UserPositionState> {
           }
           return UserPositionFailureState(
             userPositionException: LocationRetrieveCustomException(),
-            message: 'Ocorreu um erro no serviço de localização, as informações podem estar desatualizadas.',
+            message: 'Ocorreu um erro no serviço de localização.',
           );
         },
       );
@@ -63,8 +66,7 @@ class UserPositionBloc extends Bloc<UserPositionEvent, UserPositionState> {
   LatLngEntity? get lastUserPosition => _lastUserPosition;
 
   @override
-  Future<void> close() async{
+  Future<void> close() async {
     return super.close();
   }
-
 }

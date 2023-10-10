@@ -18,67 +18,71 @@ class CustomFloatingActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Builder(
-      builder: (context) {
-        final locationPermissionsStatusState = context.watch<LocationPermissionsBloc>().state;
-        final locationServiceStatusState = context.watch<LocationServiceStatusBloc>().state;
-        // final userPositionState = context.watch<UserPositionBloc>().state;
+    return Builder(builder: (context) {
+      final locationPermissionsStatusState =
+          context.watch<LocationPermissionsBloc>().state;
+      final locationServiceStatusState =
+          context.watch<LocationServiceStatusBloc>().state;
+      // final userPositionState = context.watch<UserPositionBloc>().state;
 
-        if (locationPermissionsStatusState.status == LocationPermissionsStatus.denied
-            || locationPermissionsStatusState.status == LocationPermissionsStatus.deniedForever) {
-          return FloatingActionButton(
-            shape: const CircleBorder(),
-            backgroundColor: Colors.white,
-            tooltip: 'Permissão à localização negada',
-            onPressed: () async =>
-            await geolocator_utils.showDialogToAskForLocationPermission(
-                context),
-            child: const Icon(
-                Icons.location_disabled_outlined, size: 32, color: Colors.red),
-          );
-        }
-        if (locationServiceStatusState.status == LocationServiceStatus.disabled) {
-          return FloatingActionButton(
-            shape: const CircleBorder(),
-            backgroundColor: Colors.white,
-            tooltip: 'Localização desativada',
-            onPressed: () async =>
-            await geolocator_utils.showDialogToAskForEnableLocationService(
-                context),
-            child: const Icon(
-                Icons.location_disabled_outlined, size: 32, color: Colors.red),
-          );
-        }
-        // if(userPositionState is UserPositionRequestedState){
-        //   return FloatingActionButton(
-        //     shape: const CircleBorder(),
-        //     backgroundColor: Colors.white,
-        //     tooltip: 'Posição atual',
-        //     onPressed: () async => await google_maps_utils.goToUserLocation(mapsController, userPositionState.userPosition),
-        //     child: const Icon(Icons.my_location_outlined, size: 32, color: Colors.black,),
-        //   );
-        // }
-
+      if (locationPermissionsStatusState.status ==
+              LocationPermissionsStatus.denied ||
+          locationPermissionsStatusState.status ==
+              LocationPermissionsStatus.deniedForever) {
         return FloatingActionButton(
           shape: const CircleBorder(),
           backgroundColor: Colors.white,
-          tooltip: 'Posição atual',
-          onPressed: () async => await google_maps_utils.goToUserLocation(mapsController,context.read<UserPositionBloc>().lastUserPosition!),
-          child: const Icon(Icons.my_location_outlined, size: 32, color: Colors.black,),
+          tooltip: 'Permissão à localização negada',
+          onPressed: () async => await geolocator_utils
+              .showDialogToAskForLocationPermission(context),
+          child: const Icon(Icons.location_disabled_outlined,
+              size: 32, color: Colors.red),
         );
-
-        // return FloatingActionButton(
-        //   shape: const CircleBorder(),
-        //   backgroundColor: Colors.white,
-        //   tooltip: 'Posição atual',
-        //   onPressed: () {
-        //     context.read<UserPositionBloc>().add(UserPositionRequested());
-        //   },
-        //   child: const Icon(
-        //     Icons.my_location_outlined, size: 32, color: Colors.black,),
-        // );
       }
-    );
-  }
+      if (locationServiceStatusState.status == LocationServiceStatus.disabled) {
+        return FloatingActionButton(
+          shape: const CircleBorder(),
+          backgroundColor: Colors.white,
+          tooltip: 'Localização desativada',
+          onPressed: () async => await geolocator_utils
+              .showDialogToAskForEnableLocationService(context),
+          child: const Icon(Icons.location_disabled_outlined,
+              size: 32, color: Colors.red),
+        );
+      }
+      // if(userPositionState is UserPositionRequestedState){
+      //   return FloatingActionButton(
+      //     shape: const CircleBorder(),
+      //     backgroundColor: Colors.white,
+      //     tooltip: 'Posição atual',
+      //     onPressed: () async => await google_maps_utils.goToUserLocation(mapsController, userPositionState.userPosition),
+      //     child: const Icon(Icons.my_location_outlined, size: 32, color: Colors.black,),
+      //   );
+      // }
 
+      return FloatingActionButton(
+        shape: const CircleBorder(),
+        backgroundColor: Colors.white,
+        tooltip: 'Posição atual',
+        onPressed: () async => await google_maps_utils.goToUserLocation(
+            mapsController, context.read<UserPositionBloc>().lastUserPosition!),
+        child: const Icon(
+          Icons.my_location_outlined,
+          size: 32,
+          color: Colors.black,
+        ),
+      );
+
+      // return FloatingActionButton(
+      //   shape: const CircleBorder(),
+      //   backgroundColor: Colors.white,
+      //   tooltip: 'Posição atual',
+      //   onPressed: () {
+      //     context.read<UserPositionBloc>().add(UserPositionRequested());
+      //   },
+      //   child: const Icon(
+      //     Icons.my_location_outlined, size: 32, color: Colors.black,),
+      // );
+    });
+  }
 }
