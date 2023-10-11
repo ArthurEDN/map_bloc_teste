@@ -10,8 +10,7 @@ import 'package:map_bloc_teste/components/custom_floating_action_buton_widget.da
 import 'package:map_bloc_teste/components/custom_states_body_stop_route_bottomSheet_widget.dart';
 import 'package:map_bloc_teste/entity/location_entity.dart';
 import 'package:map_bloc_teste/utils/geolocator_utils.dart' as geolocator_utils;
-import 'package:map_bloc_teste/utils/google_maps_utils.dart'
-    as google_maps_utils;
+import 'package:map_bloc_teste/utils/google_maps_utils.dart' as google_maps_utils;
 import 'bloc/app_lifecycle_bloc/app_life_cycle_bloc.dart';
 import 'bloc/bloc_observer.dart';
 import 'bloc/locations_bloc/locations_bloc.dart';
@@ -53,8 +52,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
-  final Completer<GoogleMapController> _mapsController =
-      Completer<GoogleMapController>();
+  final Completer<GoogleMapController> _mapsController = Completer<GoogleMapController>();
   final MarkersController _markersController = MarkersController();
   final PolylineController _polylineController = PolylineController();
   final ValueNotifier<bool> _theRouteWasMake = ValueNotifier(false);
@@ -111,7 +109,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           create: (context) => RouteBloc(
             BlocProvider.of<UserPositionBloc>(context),
             _polylineController,
-            _markersController,
+            _mapsController,
+            _theRouteWasMake,
           ),
         ),
       ],
@@ -182,18 +181,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               },
             ),
             BlocListener<RouteBloc, RouteState>(
-              listener: (context, state) async {
-                if (state is RouteRequestedState) {
-                  _theRouteWasMake.value = true;
+              listener: (context, state) async{
+                if(state is RouteRequestedState) {
+                  _markersController.changeVisibilityOfOthersMakers(state.destination.titulo);
                   _displayBottomSheetToStopMakingRoute(context, state.destination);
-                  await google_maps_utils.goToUserLocationAfterMakeRoute(_mapsController,
-                    LatLng(state.destination.latitude, state.destination.longitude),
-                    18,
-                    LatLng(state.userPosition.latitude, state.userPosition.longitude),
-                  );
                 }
-                if (state is RouteFailureState || state is RouteEndedState) {
-                  _theRouteWasMake.value = false;
+                if(state is RouteEndedState){
+                  _markersController.setMarkersVisible();
                 }
               },
             ),
@@ -266,18 +260,6 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       );
     });
   }
-
-  // void _makeRoute(LocationEntity location) {
-  //   _markerController.changeVisibilityOfOthersMakers(location.titulo);
-  //   _polylineController.makeRoute(
-  //       LatLng(location.latitude, location.longitude), userPositionStream);
-  //   _theRouteWasMake.value = true;
-  // }
-
-  // Future<void> _stopMakingRoute() async {
-  //   await _polylineController.stopMakingRoute();
-  //   _theRouteWasMake.value = false;
-  // }
 
   FutureOr<void> _displayBottomSheetToMakeRouteAndFilterChosenLocation(BuildContext mapPageContext, LocationEntity location) async {
     await _bottomSheetAnimationController!.animateBack(0, curve: Curves.easeIn).then((value) {

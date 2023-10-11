@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
+import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:map_bloc_teste/bloc/userPosition_bloc/user_position_bloc.dart';
 import 'package:map_bloc_teste/controllers/markers_controller.dart';
 import 'package:map_bloc_teste/controllers/polylines_controller.dart';
 import 'package:map_bloc_teste/entity/latlng_entity.dart';
 import 'package:map_bloc_teste/entity/location_entity.dart';
+import 'package:map_bloc_teste/utils/google_maps_utils.dart';
 
 part 'route_event.dart';
 part 'route_state.dart';
@@ -15,17 +17,21 @@ part 'route_state.dart';
 class RouteBloc extends Bloc<RouteEvent, RouteState> {
   final UserPositionBloc _userPositionBloc;
   final PolylineController _polylineController;
-  final MarkersController _markersController;
+  final Completer<GoogleMapController> _mapsController;
+  final ValueNotifier<bool> _theRouteWasMake;
   late StreamSubscription<UserPositionState>? _userPositionBlocSubscription;
 
   RouteBloc(
     this._userPositionBloc,
     this._polylineController,
-    this._markersController
+    this._mapsController,
+    this._theRouteWasMake,
   ) : super(const RouteInitialState()) {
     on<MakeRouteEvent>((event, emit) async{
-      emit(RouteRequestedState(userPosition: _userPositionBloc.lastUserPosition!, destination: event.destination,));
-      _markersController.changeVisibilityOfOthersMakers(event.destination.titulo);
+      emit(RouteRequestedState(destination: event.destination));
+      // if(_userPositionBloc.state is UserPositionInitialState){
+      //
+      // }
       _userPositionBlocSubscription = _userPositionBloc.stream.listen(
         (UserPositionState userPositionState) {
           if(userPositionState is UserPositionUpdatedState){
@@ -34,11 +40,18 @@ class RouteBloc extends Bloc<RouteEvent, RouteState> {
           if(userPositionState is UserPositionFailureState) {
             add(_RouteFailureEvent(errorMessage: userPositionState.message));
           }
+          if(userPositionState is UserPositionInitialState){
+            debugPrint("#########################################");
+            debugPrint(userPositionState.toString());
+            debugPrint("#########################################");
+          }
         },
-        onError: (error, stackTrace) async{
+         onError: (error, stackTrace) async{
           add(const EndRouteEvent());
         }
       );
+      _theRouteWasMake.value = true;
+      // await _cameraAnimationAfterMakeRoute(event.destination);
     });
     on<_CreateRouteEvent>((event, emit){
       _polylineController.createRoutePolyline(
@@ -59,9 +72,19 @@ class RouteBloc extends Bloc<RouteEvent, RouteState> {
 
   Future<void> _stopRoute() async{
     _polylineController.stopMakingRoute();
-    _markersController.setMarkersVisible();
+    _theRouteWasMake.value = false;
     await _userPositionBlocSubscription?.cancel();
   }
+
+  // Future<void> _cameraAnimationAfterMakeRoute(LocationEntity destination) async{
+  //   LatLngEntity? userPosition = _userPositionBloc.lastUserPosition;
+  //   await goToUserLocationAfterMakeRoute(
+  //     _mapsController,
+  //     LatLng(destination.latitude, destination.longitude),
+  //     18,
+  //     LatLng(userPosition.latitude, userPosition.longitude),
+  //   );
+  // }
 
   @override
   Future<void> close() async {

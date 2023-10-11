@@ -9,9 +9,8 @@ final class RouteInitialState extends RouteState {
 }
 
 final class RouteRequestedState extends RouteState {
-  final LatLngEntity userPosition;
   final LocationEntity destination;
-  const RouteRequestedState({required this.userPosition, required this.destination});
+  const RouteRequestedState({required this.destination});
 
 }
 

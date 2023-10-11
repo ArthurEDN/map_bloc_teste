@@ -11,7 +11,7 @@ part 'user_position_event.dart';
 part 'user_position_state.dart';
 
 class UserPositionBloc extends Bloc<UserPositionEvent, UserPositionState> {
-  late LatLngEntity? _lastUserPosition;
+  LatLngEntity? _lastUserPosition;
 
   UserPositionBloc() : super(const UserPositionInitialState()) {
     on<UserPositionSubscriptionStarted>((event, emit) async {
