@@ -3,14 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:map_bloc_teste/bloc/route_bloc/route_bloc.dart';
 import 'package:map_bloc_teste/entity/location_entity.dart';
 
-class BodyHasDataState extends StatelessWidget {
-  final BuildContext mapPageContext;
+class RouteSuccessStateBody extends StatelessWidget {
   final LocationEntity location;
   final double distanceBetweenLocations;
 
-  const BodyHasDataState({
+  const RouteSuccessStateBody({
     super.key,
-    required this.mapPageContext,
     required this.location,
     required this.distanceBetweenLocations,
   });
@@ -27,7 +25,10 @@ class BodyHasDataState extends StatelessWidget {
                   iconSize: 32,
                   icon: const Icon(Icons.arrow_back_outlined),
                   color: const Color(0xFF005B9B),
-                  onPressed: () => Navigator.pop(context)),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+              ),
             ),
             Flexible(
               child: Padding(
@@ -73,8 +74,7 @@ class BodyHasDataState extends StatelessWidget {
                                   fontFamily: 'Open Sans'),
                             ),
                             TextSpan(
-                              text:
-                                  _metersOrKilometer(distanceBetweenLocations),
+                              text: _metersOrKilometer(distanceBetweenLocations),
                               style: const TextStyle(
                                 color: Color(0xFF0088CC),
                                 fontSize: 18.0,
@@ -91,9 +91,6 @@ class BodyHasDataState extends StatelessWidget {
                       padding: const EdgeInsets.only(right: 16.0, left: 8.0),
                       child: ElevatedButton(
                         onPressed: () {
-                          mapPageContext
-                              .read<RouteBloc>()
-                              .add(const EndRouteEvent());
                           Navigator.pop(context);
                         },
                         child: const Text(
@@ -125,8 +122,10 @@ class BodyHasDataState extends StatelessWidget {
   }
 }
 
-class BodyWaitingState extends StatelessWidget {
-  const BodyWaitingState({super.key});
+class RouteWaitingStateBody extends StatelessWidget {
+  const RouteWaitingStateBody({
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -135,18 +134,19 @@ class BodyWaitingState extends StatelessWidget {
         const LinearProgressIndicator(),
         const Spacer(),
         const Expanded(
-            child: Align(
-          alignment: Alignment.topCenter,
-          child: Text(
-            "Traçando sua rota",
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              fontFamily: "Open Sans",
-              fontWeight: FontWeight.w500,
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Text(
+              "Traçando sua rota",
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 24,
+                fontFamily: "Open Sans",
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
-        )),
+        ),
         Expanded(
           child: Align(
             alignment: Alignment.topCenter,
@@ -155,7 +155,9 @@ class BodyWaitingState extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
                   child: const Text(
                     "Cancelar",
                   ),
@@ -170,13 +172,13 @@ class BodyWaitingState extends StatelessWidget {
   }
 }
 
-class BodyHasErrorState extends StatelessWidget {
-  final BuildContext mapPageContext;
+class RouteFailureStateBody extends StatelessWidget {
+
   final String errorMessageTitle;
   final String errorMessageSubTitle;
-  const BodyHasErrorState({
+
+  const RouteFailureStateBody({
     Key? key,
-    required this.mapPageContext,
     required this.errorMessageTitle,
     required this.errorMessageSubTitle,
   }) : super(key: key);
@@ -216,13 +218,11 @@ class BodyHasErrorState extends StatelessWidget {
         Align(
           alignment: Alignment.bottomCenter,
           child: Padding(
-            padding:
-                const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 24.0),
+            padding: const EdgeInsets.only(left: 20.0, right: 20.0, bottom: 24.0),
             child: SizedBox(
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: () {
-                  mapPageContext.read<RouteBloc>().add(const EndRouteEvent());
                   Navigator.pop(context);
                 },
                 child: const Text(

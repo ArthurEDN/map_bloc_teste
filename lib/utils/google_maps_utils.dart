@@ -27,8 +27,7 @@ Future<void> goToUserLocationAfterMakeRoute(
   final GoogleMapController controller = await mapsController.future;
   try {
     LatLng userPosition = userLocation;
-    await controller
-        .animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
+    await controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
       target: userPosition,
       tilt: 32,
       bearing: geolocator_utils.getGeolocatorInstance().bearingBetween(

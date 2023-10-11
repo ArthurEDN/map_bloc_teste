@@ -55,7 +55,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   final Completer<GoogleMapController> _mapsController =
       Completer<GoogleMapController>();
-  final MarkersController _markerController = MarkersController();
+  final MarkersController _markersController = MarkersController();
   final PolylineController _polylineController = PolylineController();
   final ValueNotifier<bool> _theRouteWasMake = ValueNotifier(false);
   AnimationController? _persistentBottomSheetAnimationController;
@@ -111,6 +111,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           create: (context) => RouteBloc(
             BlocProvider.of<UserPositionBloc>(context),
             _polylineController,
+            _markersController,
           ),
         ),
       ],
@@ -144,11 +145,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 return false;
               },
               listener: (context, state) {
-                if (BlocProvider.of<LocationServiceStatusBloc>(context)
-                        .locationServiceStatusValue ==
-                    LocationServiceStatus.enabled) {
-                  BlocProvider.of<UserPositionBloc>(context)
-                      .add(const UserPositionSubscriptionStarted());
+                if (BlocProvider.of<LocationServiceStatusBloc>(context).locationServiceStatusValue == LocationServiceStatus.enabled) {
+                  BlocProvider.of<UserPositionBloc>(context).add(const UserPositionSubscriptionStarted());
                 }
               },
             ),
@@ -157,14 +155,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                 return next.status == LocationServiceStatus.enabled;
               },
               listener: (context, state) {
-                if (BlocProvider.of<LocationPermissionsBloc>(context)
-                            .locationPermission ==
-                        LocationPermissionsStatus.always ||
-                    BlocProvider.of<LocationPermissionsBloc>(context)
-                            .locationPermission ==
-                        LocationPermissionsStatus.whileInUse) {
-                  BlocProvider.of<UserPositionBloc>(context)
-                      .add(const UserPositionSubscriptionStarted());
+                if (BlocProvider.of<LocationPermissionsBloc>(context).locationPermission == LocationPermissionsStatus.always ||
+                    BlocProvider.of<LocationPermissionsBloc>(context).locationPermission == LocationPermissionsStatus.whileInUse) {
+                        BlocProvider.of<UserPositionBloc>(context).add(const UserPositionSubscriptionStarted());
                 }
               },
             ),
@@ -191,20 +184,12 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             BlocListener<RouteBloc, RouteState>(
               listener: (context, state) async {
                 if (state is RouteRequestedState) {
-                  LatLngEntity userPosition =
-                      BlocProvider.of<UserPositionBloc>(context)
-                          .lastUserPosition!;
-                  _markerController
-                      .changeVisibilityOfOthersMakers(state.destination.titulo);
                   _theRouteWasMake.value = true;
-                  _displayBottomSheetToStopMakingRoute(
-                      context, state.destination);
-                  await google_maps_utils.goToUserLocationAfterMakeRoute(
-                    _mapsController,
-                    LatLng(state.destination.latitude,
-                        state.destination.longitude),
+                  _displayBottomSheetToStopMakingRoute(context, state.destination);
+                  await google_maps_utils.goToUserLocationAfterMakeRoute(_mapsController,
+                    LatLng(state.destination.latitude, state.destination.longitude),
                     18,
-                    LatLng(userPosition.latitude, userPosition.longitude),
+                    LatLng(state.userPosition.latitude, state.userPosition.longitude),
                   );
                 }
                 if (state is RouteFailureState || state is RouteEndedState) {
@@ -216,30 +201,33 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
           child: Stack(
             children: [
               ValueListenableBuilder<Set<Marker>>(
-                valueListenable: _markerController,
-                builder: (BuildContext context, Set<Marker> markersValue,
-                        Widget? child) =>
-                    GoogleMap(
-                  onMapCreated: (GoogleMapController controller) async {
-                    _mapsController.complete(controller);
-                    await checkUserPositionBlocState(context);
+                valueListenable: _markersController,
+                builder: (BuildContext context, Set<Marker> markersValue, Widget? child) => ValueListenableBuilder<Set<Polyline>>(
+                  valueListenable: _polylineController,
+                  builder: (BuildContext context, Set<Polyline> value, Widget? child) {
+                    return GoogleMap(
+                      onMapCreated: (GoogleMapController controller) async {
+                        _mapsController.complete(controller);
+                        await checkUserPositionBlocState(context);
+                      },
+                      minMaxZoomPreference: const MinMaxZoomPreference(12, 18.5),
+                      mapToolbarEnabled: false,
+                      myLocationButtonEnabled: false,
+                      compassEnabled: false,
+                      zoomControlsEnabled: false,
+                      myLocationEnabled: true,
+                      zoomGesturesEnabled: true,
+                      rotateGesturesEnabled: true,
+                      mapType: MapType.normal,
+                      initialCameraPosition: const CameraPosition(
+                        target: LatLng(-3.768964, -38.478966),
+                        tilt: 32,
+                        zoom: 18,
+                      ),
+                      markers: _markersController.value,
+                      polylines: _polylineController.value,
+                    );
                   },
-                  minMaxZoomPreference: const MinMaxZoomPreference(12, 18.5),
-                  mapToolbarEnabled: false,
-                  myLocationButtonEnabled: false,
-                  compassEnabled: false,
-                  zoomControlsEnabled: false,
-                  myLocationEnabled: true,
-                  zoomGesturesEnabled: true,
-                  rotateGesturesEnabled: true,
-                  mapType: MapType.normal,
-                  initialCameraPosition: const CameraPosition(
-                    target: LatLng(-3.768964, -38.478966),
-                    tilt: 32,
-                    zoom: 18,
-                  ),
-                  markers: _markerController.value,
-                  polylines: _polylineController.value,
                 ),
               ),
             ],
@@ -269,10 +257,9 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     }
   }
 
-  void _setLocationsListAndMarkersWithStateLocations(
-      BuildContext context, List<LocationEntity> locationsList) {
+  void _setLocationsListAndMarkersWithStateLocations(BuildContext context, List<LocationEntity> locationsList) {
     _locationsList = locationsList;
-    _markerController.getMarkers(locationsList, (String chosenLocation) async {
+    _markersController.getMarkers(locationsList, (String chosenLocation) async {
       await _displayBottomSheetToMakeRouteAndFilterChosenLocation(
         context,
         _getLocationByTitle(chosenLocation),
@@ -292,143 +279,119 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
   //   _theRouteWasMake.value = false;
   // }
 
-  FutureOr<void> _displayBottomSheetToMakeRouteAndFilterChosenLocation(
-      BuildContext mapPageContext, LocationEntity location) async {
-    await _bottomSheetAnimationController!
-        .animateBack(0, curve: Curves.easeIn)
-        .then((value) {
-      Scaffold.of(mapPageContext)
-          .showBottomSheet(
-              elevation: 15,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.vertical(
-                  top: Radius.circular(25.0),
-                ),
-              ),
-              (context) => SizedBox(
-                    height: MediaQuery.of(context).size.height / 4.5,
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            Padding(
-                              padding:
-                                  const EdgeInsets.only(left: 16.0, top: 24.0),
-                              child: IconButton(
-                                iconSize: 32,
-                                icon: const Icon(Icons.arrow_back_outlined),
-                                color: const Color(0xFF005B9B),
-                                onPressed: () {
-                                  Navigator.pop(context);
-                                },
-                              ),
-                            ),
-                            Flexible(
-                              child: Padding(
-                                padding: const EdgeInsets.only(
-                                    top: 20.0, right: 24, left: 8.0),
-                                child: Text(
-                                  location.titulo,
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontFamily: "Open Sans",
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+  FutureOr<void> _displayBottomSheetToMakeRouteAndFilterChosenLocation(BuildContext mapPageContext, LocationEntity location) async {
+    await _bottomSheetAnimationController!.animateBack(0, curve: Curves.easeIn).then((value) {
+      Scaffold.of(mapPageContext).showBottomSheet(
+        elevation: 15,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(25.0),),),
+        (context) => SizedBox(
+            height: MediaQuery.of(context).size.height / 4.5,
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(left: 16.0, top: 24.0),
+                        child: IconButton(
+                          iconSize: 32,
+                          icon: const Icon(Icons.arrow_back_outlined),
+                          color: const Color(0xFF005B9B),
+                          onPressed: () {
+                            Navigator.pop(context);
+                          },
                         ),
-                        Align(
-                          alignment: Alignment.bottomCenter,
-                          child: Padding(
-                            padding: const EdgeInsets.only(
-                              left: 32.0,
-                              right: 32.0,
-                            ),
-                            child: SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton(
-                                onPressed: () {
-                                  context.read<RouteBloc>().add(
-                                      MakeRouteEvent(destination: location));
-                                },
-                                child: const Text(
-                                  "Como chegar",
-                                  style: TextStyle(
-                                    fontFamily: "Open Sans",
-                                    fontWeight: FontWeight.w500,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                              ),
+                      ),
+                      Flexible(
+                        child: Padding(
+                          padding: const EdgeInsets.only(
+                              top: 20.0, right: 24, left: 8.0),
+                          child: Text(
+                            location.titulo,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontFamily: "Open Sans",
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ),
-                      ],
+                      ),
+                    ],
+                  ),
+                Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                      left: 32.0,
+                      right: 32.0,
                     ),
-                  ))
-          .closed
-          .whenComplete(() async {
-        _bottomSheetAnimationController!.forward();
-        await google_maps_utils.hideMarkerInfoWindow(
-          _mapsController,
-          location.titulo,
-        );
-      });
-    });
-  }
-
-  void _displayBottomSheetToStopMakingRoute(
-      BuildContext mapPageContext, LocationEntity location) {
-    Scaffold.of(mapPageContext)
-        .showBottomSheet(
-          elevation: 15,
-          enableDrag: false,
-          transitionAnimationController:
-              _persistentBottomSheetAnimationController,
-          (context) => SizedBox(
-            height: MediaQuery.of(context).size.height / 3,
-            child: BlocBuilder<RouteBloc, RouteState>(
-              builder: (context, state) {
-                if (state is OnRouteState) {
-                  return AbsorbPointer(
-                    absorbing:
-                        _persistentBottomSheetAnimationController!.status ==
-                            AnimationStatus.reverse,
-                    child: BodyHasDataState(
-                      mapPageContext: mapPageContext,
-                      location: location,
-                      distanceBetweenLocations:
-                          geolocator_utils.getDistanceBetweenLocations(
-                        LatLng(state.userPosition.latitude,
-                            state.userPosition.longitude),
-                        LatLng(
-                          location.latitude,
-                          location.longitude,
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            context.read<RouteBloc>().add(
+                                MakeRouteEvent(destination: location));
+                          },
+                          child: const Text(
+                            "Como chegar",
+                            style: TextStyle(
+                              fontFamily: "Open Sans",
+                              fontWeight: FontWeight.w500,
+                              fontSize: 16,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  );
-                }
-                if (state is RouteFailureState) {
-                  return BodyHasErrorState(
-                    mapPageContext: mapPageContext,
-                    errorMessageTitle: "Oops! Algo deu errado!",
-                    errorMessageSubTitle: state.errorMessage,
-                  );
-                }
-                return const BodyWaitingState();
-              },
+                  ),
+                ],
             ),
-          ),
-        )
-        .closed
-        .whenComplete(() async {
-      await google_maps_utils.hideMarkerInfoWindow(
-        _mapsController,
-        location.titulo,
-      );
+        )).closed.whenComplete(() async {
+            _bottomSheetAnimationController!.forward();
+            await google_maps_utils.hideMarkerInfoWindow(
+              _mapsController,
+              location.titulo,
+           );
+        });
+    });
+  }
+
+  void _displayBottomSheetToStopMakingRoute(BuildContext mapPageContext, LocationEntity location) {
+    Scaffold.of(mapPageContext).showBottomSheet(
+      elevation: 15,
+      enableDrag: false,
+      transitionAnimationController: _persistentBottomSheetAnimationController,
+      (context) => SizedBox(
+        height: MediaQuery.of(context).size.height / 3,
+        child: BlocBuilder<RouteBloc, RouteState>(
+          builder: (context, state) {
+            if(state is RouteRequestedState){
+                return const RouteWaitingStateBody();
+              }
+            if (state is OnRouteState) {
+                return AbsorbPointer(
+                  absorbing: _persistentBottomSheetAnimationController!.status == AnimationStatus.reverse,
+                  child: RouteSuccessStateBody(
+                    location: location,
+                    distanceBetweenLocations: geolocator_utils.getDistanceBetweenLocations(
+                      LatLng(state.userPosition.latitude, state.userPosition.longitude),
+                      LatLng(location.latitude, location.longitude,),
+                    ),
+                  ),
+                );
+              }
+            if (state is RouteFailureState) {
+                return RouteFailureStateBody(
+                  errorMessageTitle: "Oops! Algo deu errado!",
+                  errorMessageSubTitle: state.errorMessage,
+                );
+              }
+            return Container();
+          },
+        ),
+      ),
+    ).closed.whenComplete(() async {
+       mapPageContext.read<RouteBloc>().add(const EndRouteEvent());
+       await google_maps_utils.hideMarkerInfoWindow(_mapsController, location.titulo);
     });
   }
 }

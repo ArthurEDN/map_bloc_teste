@@ -57,7 +57,6 @@ class LocationServiceStatusBloc extends Bloc<LocationServiceStatusEvent, Locatio
     }
   }
 
-
   LocationServiceStatus get locationServiceStatusValue => _locationServiceStatus;
 
   Future<bool> get _locationServiceIsEnabledValue async =>
