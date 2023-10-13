@@ -14,6 +14,7 @@ LocationSettings initializeGeoLocatorConfigurations(){
   } else {
     return AppleSettings(
       accuracy: LocationAccuracy.best,
+      activityType: ActivityType.fitness,
     );
   }
 }

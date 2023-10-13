@@ -103,7 +103,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             create: (context) =>
                 AppLifeCycleBloc()..add(const AppLifeCycleStarted())),
         BlocProvider(
-          create: (context) => UserPositionBloc(),
+          create: (context) => UserPositionBloc()
+            ..add(const UserPositionSubscriptionStarted()),
         ),
         BlocProvider(
           create: (context) => RouteBloc(
@@ -161,16 +162,16 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
               },
             ),
             BlocListener<LocationsBloc, LocationsState>(
-                listener: (context, state) {
-              if (state is LocationsFailureState) {
-                _setLocationsListAndMarkersWithStateLocations(
-                    context, state.locations);
-                geolocator_utils.showSnackBarWithError(
-                    context, state.errorMessage);
-              } else if (state is LocationsSuccessState) {
-                _setLocationsListAndMarkersWithStateLocations(
-                    context, state.locations);
-              }
+              listener: (context, state) {
+                if (state is LocationsFailureState) {
+                  _setLocationsListAndMarkersWithStateLocations(
+                      context, state.locations);
+                  geolocator_utils.showSnackBarWithError(
+                      context, state.errorMessage);
+                } else if (state is LocationsSuccessState) {
+                  _setLocationsListAndMarkersWithStateLocations(
+                      context, state.locations);
+                }
             }),
             BlocListener<UserPositionBloc, UserPositionState>(
               listener: (context, state) {
@@ -261,7 +262,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
     });
   }
 
-  FutureOr<void> _displayBottomSheetToMakeRouteAndFilterChosenLocation(BuildContext mapPageContext, LocationEntity location) async {
+  Future<void> _displayBottomSheetToMakeRouteAndFilterChosenLocation(BuildContext mapPageContext, LocationEntity location) async {
     await _bottomSheetAnimationController!.animateBack(0, curve: Curves.easeIn).then((value) {
       Scaffold.of(mapPageContext).showBottomSheet(
         elevation: 15,
@@ -271,19 +272,19 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             child: Column(
               children: [
                 Row(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(left: 16.0, top: 24.0),
-                        child: IconButton(
-                          iconSize: 32,
-                          icon: const Icon(Icons.arrow_back_outlined),
-                          color: const Color(0xFF005B9B),
-                          onPressed: () {
-                            Navigator.pop(context);
-                          },
-                        ),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16.0, top: 24.0),
+                      child: IconButton(
+                        iconSize: 32,
+                        icon: const Icon(Icons.arrow_back_outlined),
+                        color: const Color(0xFF005B9B),
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
                       ),
-                      Flexible(
+                    ),
+                    Flexible(
                         child: Padding(
                           padding: const EdgeInsets.only(
                               top: 20.0, right: 24, left: 8.0),
@@ -297,8 +298,8 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                  ],
+                ),
                 Align(
                   alignment: Alignment.bottomCenter,
                   child: Padding(
@@ -310,8 +311,17 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            context.read<RouteBloc>().add(
-                                MakeRouteEvent(destination: location));
+                            UserPositionState userPositionState = mapPageContext.read<UserPositionBloc>().state;
+                            if(userPositionState is UserPositionUpdatedState){
+                              context.read<RouteBloc>().add(MakeRouteEvent(destination: location));
+                            }
+                            if(userPositionState is UserPositionFailureState){
+                              context.read<UserPositionBloc>().add(
+                                  UserPositionFailureEvent(
+                                      userPositionException: userPositionState.userPositionException,
+                                      message: userPositionState.message,
+                                  ));
+                            }
                           },
                           child: const Text(
                             "Como chegar",
@@ -343,13 +353,13 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
       enableDrag: false,
       transitionAnimationController: _persistentBottomSheetAnimationController,
       (context) => SizedBox(
-        height: MediaQuery.of(context).size.height / 3,
+        height: MediaQuery.of(context).size.height/3,
         child: BlocBuilder<RouteBloc, RouteState>(
           builder: (context, state) {
             if(state is RouteRequestedState){
                 return const RouteWaitingStateBody();
               }
-            if (state is OnRouteState) {
+            if(state is OnRouteState){
                 return AbsorbPointer(
                   absorbing: _persistentBottomSheetAnimationController!.status == AnimationStatus.reverse,
                   child: RouteSuccessStateBody(
@@ -361,7 +371,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                   ),
                 );
               }
-            if (state is RouteFailureState) {
+            if(state is RouteFailureState){
                 return RouteFailureStateBody(
                   errorMessageTitle: "Oops! Algo deu errado!",
                   errorMessageSubTitle: state.errorMessage,

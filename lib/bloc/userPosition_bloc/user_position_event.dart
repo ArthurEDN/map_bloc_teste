@@ -9,5 +9,16 @@ final class UserPositionSubscriptionStarted extends UserPositionEvent{
   const UserPositionSubscriptionStarted();
 }
 
-final class UserPositionRequested extends UserPositionEvent{}
+final class _UserPositionOnDataEvent extends UserPositionEvent{
+  const _UserPositionOnDataEvent();
+}
+
+final class _UserPositionOnErrorEvent extends UserPositionEvent{
+  final Exception userPositionException;
+  final String message;
+
+  const _UserPositionOnErrorEvent({required this.userPositionException, required this.message});
+}
+
+
 

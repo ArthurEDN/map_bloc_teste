@@ -4,8 +4,10 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:map_bloc_teste/entity/latlng_entity.dart';
 import 'package:map_bloc_teste/utils/geolocator_utils.dart' as geolocator_utils;
 
-Future<void> goToUserLocation(Completer<GoogleMapController> mapsController,
-    LatLngEntity userLocation) async {
+Future<void> goToUserLocation(
+  Completer<GoogleMapController> mapsController,
+  LatLngEntity userLocation,
+) async {
   final GoogleMapController controller = await mapsController.future;
   try {
     await controller
@@ -20,27 +22,26 @@ Future<void> goToUserLocation(Completer<GoogleMapController> mapsController,
 }
 
 Future<void> goToUserLocationAfterMakeRoute(
-    Completer<GoogleMapController> mapsController,
-    LatLng locationLatLng,
-    double zoom,
-    LatLng userLocation) async {
+  Completer<GoogleMapController> mapsController,
+  LatLngEntity userPosition,
+  LatLngEntity destinationLatLng,
+ ) async {
   final GoogleMapController controller = await mapsController.future;
   try {
-    LatLng userPosition = userLocation;
     await controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-      target: userPosition,
+      target: LatLng(userPosition.latitude, userPosition.longitude),
       tilt: 32,
+      zoom: 18,
       bearing: geolocator_utils.getGeolocatorInstance().bearingBetween(
-            userPosition.latitude,
-            userPosition.longitude,
-            locationLatLng.latitude,
-            locationLatLng.longitude,
-          ),
-      zoom: zoom,
+        userPosition.latitude,
+        userPosition.longitude,
+        destinationLatLng.latitude,
+        destinationLatLng.longitude,
+      ),
     )));
   } catch (e) {
-    controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(
-        target: const LatLng(-3.768964, -38.478966), zoom: zoom, tilt: 32)));
+    controller.animateCamera(CameraUpdate.newCameraPosition(const CameraPosition(
+        target: LatLng(-3.768964, -38.478966), zoom: 18, tilt: 32)));
     rethrow;
   }
 }

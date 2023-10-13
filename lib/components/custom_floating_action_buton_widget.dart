@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:map_bloc_teste/bloc/location_permissions_boc/location_permissions_bloc.dart';
+import 'package:map_bloc_teste/bloc/location_service_status_bloc/location_service_status_bloc.dart';
+import 'package:map_bloc_teste/bloc/route_bloc/route_bloc.dart';
 import 'package:map_bloc_teste/bloc/userPosition_bloc/user_position_bloc.dart';
+import 'package:map_bloc_teste/entity/latlng_entity.dart';
 import 'package:map_bloc_teste/utils/geolocator_utils.dart' as geolocator_utils;
-import '../bloc/location_service_status_bloc/location_service_status_bloc.dart';
 import '../utils/google_maps_utils.dart' as google_maps_utils;
 
 class CustomFloatingActionButton extends StatelessWidget {
@@ -19,16 +21,12 @@ class CustomFloatingActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Builder(builder: (context) {
-      final locationPermissionsStatusState =
-          context.watch<LocationPermissionsBloc>().state;
-      final locationServiceStatusState =
-          context.watch<LocationServiceStatusBloc>().state;
-      // final userPositionState = context.watch<UserPositionBloc>().state;
+      final locationPermissionsStatusState = context.watch<LocationPermissionsBloc>().state;
+      final locationServiceStatusState = context.watch<LocationServiceStatusBloc>().state;
+      final routeState = context.watch<RouteBloc>().state;
 
-      if (locationPermissionsStatusState.status ==
-              LocationPermissionsStatus.denied ||
-          locationPermissionsStatusState.status ==
-              LocationPermissionsStatus.deniedForever) {
+      if (locationPermissionsStatusState.status == LocationPermissionsStatus.denied ||
+          locationPermissionsStatusState.status == LocationPermissionsStatus.deniedForever) {
         return FloatingActionButton(
           shape: const CircleBorder(),
           backgroundColor: Colors.white,
@@ -39,6 +37,7 @@ class CustomFloatingActionButton extends StatelessWidget {
               size: 32, color: Colors.red),
         );
       }
+
       if (locationServiceStatusState.status == LocationServiceStatus.disabled) {
         return FloatingActionButton(
           shape: const CircleBorder(),
@@ -50,15 +49,24 @@ class CustomFloatingActionButton extends StatelessWidget {
               size: 32, color: Colors.red),
         );
       }
-      // if(userPositionState is UserPositionRequestedState){
-      //   return FloatingActionButton(
-      //     shape: const CircleBorder(),
-      //     backgroundColor: Colors.white,
-      //     tooltip: 'Posição atual',
-      //     onPressed: () async => await google_maps_utils.goToUserLocation(mapsController, userPositionState.userPosition),
-      //     child: const Icon(Icons.my_location_outlined, size: 32, color: Colors.black,),
-      //   );
-      // }
+
+      if(routeState is OnRouteState){
+        return FloatingActionButton(
+          shape: const CircleBorder(),
+          backgroundColor: Colors.white,
+          tooltip: 'Posição atual',
+          onPressed: () async => await google_maps_utils.goToUserLocationAfterMakeRoute(
+            mapsController,
+            context.read<UserPositionBloc>().lastUserPosition!,
+            LatLngEntity(latitude: routeState.destination.latitude, longitude: routeState.destination.longitude),
+          ),
+          child: const Icon(
+            Icons.my_location_outlined,
+            size: 32,
+            color: Colors.black,
+          ),
+        );
+      }
 
       return FloatingActionButton(
         shape: const CircleBorder(),
@@ -73,16 +81,6 @@ class CustomFloatingActionButton extends StatelessWidget {
         ),
       );
 
-      // return FloatingActionButton(
-      //   shape: const CircleBorder(),
-      //   backgroundColor: Colors.white,
-      //   tooltip: 'Posição atual',
-      //   onPressed: () {
-      //     context.read<UserPositionBloc>().add(UserPositionRequested());
-      //   },
-      //   child: const Icon(
-      //     Icons.my_location_outlined, size: 32, color: Colors.black,),
-      // );
     });
   }
 }
