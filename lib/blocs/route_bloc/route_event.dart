@@ -17,6 +17,10 @@ final class _CreateRouteEvent extends RouteEvent{
   const _CreateRouteEvent({required this.userPosition, required this.destination});
 }
 
+final class _WaitingRouteEvent extends RouteEvent{
+  const _WaitingRouteEvent();
+}
+
 final class _RouteFailureEvent extends RouteEvent{
   final String errorMessage;
   const _RouteFailureEvent({required this.errorMessage});

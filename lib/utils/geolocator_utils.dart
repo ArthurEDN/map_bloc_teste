@@ -28,7 +28,8 @@ Stream<ServiceStatus> getGeolocatorServiceStatusStream(){
 }
 
 Stream<Position> getGeolocatorUserPositionStream(){
-  return getGeolocatorInstance().getPositionStream(locationSettings: initializeGeoLocatorConfigurations());
+  LocationSettings locationSettings = initializeGeoLocatorConfigurations();
+  return getGeolocatorInstance().getPositionStream(locationSettings: locationSettings);
 }
 
 double getDistanceBetweenLocations(LatLng userLocation, LatLng location){

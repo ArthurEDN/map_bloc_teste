@@ -2,11 +2,11 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:map_bloc_teste/bloc/location_permissions_boc/location_permissions_bloc.dart';
-import 'package:map_bloc_teste/bloc/location_service_status_bloc/location_service_status_bloc.dart';
-import 'package:map_bloc_teste/bloc/route_bloc/route_bloc.dart';
-import 'package:map_bloc_teste/bloc/userPosition_bloc/user_position_bloc.dart';
-import 'package:map_bloc_teste/entity/latlng_entity.dart';
+import 'package:map_bloc_teste/blocs/location_permissions_boc/location_permissions_bloc.dart';
+import 'package:map_bloc_teste/blocs/location_service_status_bloc/location_service_status_bloc.dart';
+import 'package:map_bloc_teste/blocs/route_bloc/route_bloc.dart';
+import 'package:map_bloc_teste/blocs/user_position_bloc/user_position_bloc.dart';
+import 'package:map_bloc_teste/entities/latlng_entity.dart';
 import 'package:map_bloc_teste/utils/geolocator_utils.dart' as geolocator_utils;
 import '../utils/google_maps_utils.dart' as google_maps_utils;
 

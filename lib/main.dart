@@ -2,23 +2,24 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:map_bloc_teste/bloc/location_permissions_boc/location_permissions_bloc.dart';
-import 'package:map_bloc_teste/bloc/location_service_status_bloc/location_service_status_bloc.dart';
-import 'package:map_bloc_teste/bloc/route_bloc/route_bloc.dart';
-import 'package:map_bloc_teste/bloc/userPosition_bloc/user_position_bloc.dart';
+import 'package:map_bloc_teste/blocs/app_lifecycle_bloc/app_life_cycle_bloc.dart';
+import 'package:map_bloc_teste/blocs/bloc_observer.dart';
+import 'package:map_bloc_teste/blocs/location_bloc/locations_bloc.dart';
+import 'package:map_bloc_teste/blocs/location_bloc/locations_event.dart';
+import 'package:map_bloc_teste/blocs/location_bloc/locations_state.dart';
+import 'package:map_bloc_teste/blocs/location_permissions_boc/location_permissions_bloc.dart';
+import 'package:map_bloc_teste/blocs/location_service_status_bloc/location_service_status_bloc.dart';
+import 'package:map_bloc_teste/blocs/route_bloc/route_bloc.dart';
+import 'package:map_bloc_teste/blocs/user_position_bloc/user_position_bloc.dart';
 import 'package:map_bloc_teste/components/custom_floating_action_buton_widget.dart';
 import 'package:map_bloc_teste/components/custom_states_body_stop_route_bottomSheet_widget.dart';
-import 'package:map_bloc_teste/entity/location_entity.dart';
+import 'package:map_bloc_teste/controllers/markers_controller.dart';
+import 'package:map_bloc_teste/controllers/polylines_controller.dart';
+import 'package:map_bloc_teste/entities/latlng_entity.dart';
+import 'package:map_bloc_teste/entities/location_entity.dart';
 import 'package:map_bloc_teste/utils/geolocator_utils.dart' as geolocator_utils;
 import 'package:map_bloc_teste/utils/google_maps_utils.dart' as google_maps_utils;
-import 'bloc/app_lifecycle_bloc/app_life_cycle_bloc.dart';
-import 'bloc/bloc_observer.dart';
-import 'bloc/locations_bloc/locations_bloc.dart';
-import 'bloc/locations_bloc/locations_event.dart';
-import 'bloc/locations_bloc/locations_state.dart';
-import 'controllers/markers_controller.dart';
-import 'controllers/polylines_controller.dart';
-import 'entity/latlng_entity.dart';
+
 
 void main() {
   Bloc.observer = SimpleBlocObserver();
@@ -103,8 +104,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             create: (context) =>
                 AppLifeCycleBloc()..add(const AppLifeCycleStarted())),
         BlocProvider(
-          create: (context) => UserPositionBloc()
-            ..add(const UserPositionSubscriptionStarted()),
+          create: (context) => UserPositionBloc(),
         ),
         BlocProvider(
           create: (context) => RouteBloc(
@@ -176,8 +176,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
             BlocListener<UserPositionBloc, UserPositionState>(
               listener: (context, state) {
                 if (state is UserPositionFailureState) {
-                  geolocator_utils.showSnackBarWithError(
-                      context, state.message);
+                  geolocator_utils.showSnackBarWithError(context, state.errorMessage);
                 }
               },
             ),
@@ -311,17 +310,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                            UserPositionState userPositionState = mapPageContext.read<UserPositionBloc>().state;
-                            if(userPositionState is UserPositionUpdatedState){
-                              context.read<RouteBloc>().add(MakeRouteEvent(destination: location));
-                            }
-                            if(userPositionState is UserPositionFailureState){
-                              context.read<UserPositionBloc>().add(
-                                  UserPositionFailureEvent(
-                                      userPositionException: userPositionState.userPositionException,
-                                      message: userPositionState.message,
-                                  ));
-                            }
+                            context.read<RouteBloc>().add(MakeRouteEvent(destination: location));
                           },
                           child: const Text(
                             "Como chegar",
@@ -356,27 +345,27 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
         height: MediaQuery.of(context).size.height/3,
         child: BlocBuilder<RouteBloc, RouteState>(
           builder: (context, state) {
-            if(state is RouteRequestedState){
-                return const RouteWaitingStateBody();
-              }
+            if(state is RouteLoadingState){
+              return const RouteWaitingStateBody();
+            }
             if(state is OnRouteState){
-                return AbsorbPointer(
-                  absorbing: _persistentBottomSheetAnimationController!.status == AnimationStatus.reverse,
-                  child: RouteSuccessStateBody(
-                    location: location,
-                    distanceBetweenLocations: geolocator_utils.getDistanceBetweenLocations(
-                      LatLng(state.userPosition.latitude, state.userPosition.longitude),
-                      LatLng(location.latitude, location.longitude,),
-                    ),
+              return AbsorbPointer(
+                absorbing: _persistentBottomSheetAnimationController!.status == AnimationStatus.reverse,
+                child: OnRouteStateBody(
+                  location: location,
+                  distanceBetweenLocations: geolocator_utils.getDistanceBetweenLocations(
+                    LatLng(state.userPosition.latitude, state.userPosition.longitude),
+                    LatLng(location.latitude, location.longitude,),
                   ),
-                );
-              }
+                ),
+              );
+            }
             if(state is RouteFailureState){
-                return RouteFailureStateBody(
-                  errorMessageTitle: "Oops! Algo deu errado!",
-                  errorMessageSubTitle: state.errorMessage,
-                );
-              }
+              return RouteFailureStateBody(
+                errorMessageTitle: "Oops! Algo deu errado!",
+                errorMessageSubTitle: state.errorMessage,
+              );
+            }
             return Container();
           },
         ),

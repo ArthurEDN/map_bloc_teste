@@ -4,10 +4,10 @@ import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:map_bloc_teste/bloc/userPosition_bloc/user_position_bloc.dart';
+import 'package:map_bloc_teste/blocs/user_position_bloc/user_position_bloc.dart';
 import 'package:map_bloc_teste/controllers/polylines_controller.dart';
-import 'package:map_bloc_teste/entity/latlng_entity.dart';
-import 'package:map_bloc_teste/entity/location_entity.dart';
+import 'package:map_bloc_teste/entities/latlng_entity.dart';
+import 'package:map_bloc_teste/entities/location_entity.dart';
 import 'package:map_bloc_teste/utils/google_maps_utils.dart';
 
 part 'route_event.dart';
@@ -28,16 +28,24 @@ class RouteBloc extends Bloc<RouteEvent, RouteState> {
   ) : super(const RouteInitialState()) {
     on<MakeRouteEvent>((event, emit) async{
       emit(RouteRequestedState(destination: event.destination));
-      _userPositionBlocSubscription = _userPositionBloc.stream.listen(
-        (UserPositionState userPositionState) {
+      emit(const RouteLoadingState());
+      _userPositionBlocSubscription = _userPositionBloc.listenWithCurrent(
+        _userPositionBloc,
+        (userPositionState) {
+          if(userPositionState is UserPositionInitialState){
+            add(const _RouteFailureEvent(errorMessage: "Permissões não concedidas ou serviço de localização desabilitado."));
+          }
+          if(userPositionState is UserPositionLoadingState){
+            add(const _WaitingRouteEvent());
+          }
           if(userPositionState is UserPositionUpdatedState){
             add(_CreateRouteEvent(userPosition: userPositionState.userPosition, destination: event.destination));
           }
           if(userPositionState is UserPositionFailureState) {
-            add(_RouteFailureEvent(errorMessage: userPositionState.message));
+            add(_RouteFailureEvent(errorMessage: userPositionState.errorMessage));
           }
         },
-         onError: (error, stackTrace){
+        onError: (error, stackTrace){
           add(const EndRouteEvent());
         }
       );
@@ -50,6 +58,9 @@ class RouteBloc extends Bloc<RouteEvent, RouteState> {
           LatLng(event.destination.latitude, event.destination.longitude),
       );
       return emit(OnRouteState(userPosition: event.userPosition, destination: event.destination));
+    });
+    on<_WaitingRouteEvent>((event, emit){
+      return emit(const RouteLoadingState());
     });
     on<_RouteFailureEvent>((event, emit){
       _polylineController.stopMakingRoute();
@@ -80,6 +91,25 @@ class RouteBloc extends Bloc<RouteEvent, RouteState> {
   Future<void> close() async {
     _userPositionBlocSubscription?.cancel();
     return super.close();
+  }
+}
+
+extension ListenWithCurrentBlocState<ExtEvent, ExtState> on Bloc<ExtEvent, ExtState> {
+  StreamSubscription<ExtState> listenWithCurrent<B extends Bloc<ExtEvent, ExtState>>(
+      B bloc,
+      void Function(ExtState state) onData, {
+        Function? onError,
+        void Function()? onDone,
+        bool? cancelOnError,
+      }) {
+    onData(bloc.state);
+
+    return bloc.stream.listen(
+      onData,
+      onError: onError,
+      onDone: onDone,
+      cancelOnError: cancelOnError,
+    );
   }
 }
 

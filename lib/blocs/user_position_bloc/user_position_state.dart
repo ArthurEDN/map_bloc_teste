@@ -19,7 +19,6 @@ final class UserPositionLoadingState extends UserPositionState{
 
 final class UserPositionUpdatedState extends UserPositionState{
     const UserPositionUpdatedState({required this.userPosition});
-
     final LatLngEntity userPosition;
 
     @override
@@ -27,13 +26,13 @@ final class UserPositionUpdatedState extends UserPositionState{
 }
 
 final class UserPositionFailureState extends UserPositionState{
-  const UserPositionFailureState({required this.userPositionException, required this.message});
+  const UserPositionFailureState({required this.userPositionException, required this.errorMessage});
 
   final Exception userPositionException;
-  final String message;
+  final String errorMessage;
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [errorMessage];
 }
 
 

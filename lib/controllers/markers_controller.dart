@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:map_bloc_teste/entity/location_entity.dart';
+import 'package:map_bloc_teste/entities/location_entity.dart';
 
 class MarkersController extends ValueNotifier<Set<Marker>> {
   MarkersController() : super(<Marker>{});

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:map_bloc_teste/entity/latlng_entity.dart';
+import 'package:map_bloc_teste/entities/latlng_entity.dart';
 import 'package:map_bloc_teste/utils/geolocator_utils.dart' as geolocator_utils;
 
 Future<void> goToUserLocation(

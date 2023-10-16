@@ -11,6 +11,13 @@ final class RouteInitialState extends RouteState {
   List<Object?> get props => [];
 }
 
+final class RouteLoadingState extends RouteState{
+  const RouteLoadingState();
+
+  @override
+  List<Object?> get props => [];
+}
+
 final class RouteRequestedState extends RouteState {
   final LocationEntity destination;
   const RouteRequestedState({required this.destination});

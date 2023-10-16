@@ -1,4 +1,4 @@
-import 'package:map_bloc_teste/entity/location_entity.dart';
+import 'package:map_bloc_teste/entities/location_entity.dart';
 
 sealed class LocationsState {
   const LocationsState();

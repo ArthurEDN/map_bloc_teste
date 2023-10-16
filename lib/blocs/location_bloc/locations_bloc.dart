@@ -1,5 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:map_bloc_teste/entity/location_entity.dart';
+import 'package:map_bloc_teste/entities/location_entity.dart';
 
 import 'locations_event.dart';
 import 'locations_state.dart';
