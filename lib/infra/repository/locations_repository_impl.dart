@@ -2,12 +2,12 @@ import 'package:fpdart/src/either.dart';
 import 'package:map_bloc_teste/domain/entities/location_entity.dart';
 import 'package:map_bloc_teste/domain/errors/mapa_failures.dart';
 import 'package:map_bloc_teste/domain/repository/ilocations_repository.dart';
-import 'package:map_bloc_teste/external/datasource/mapa_datasource.dart';
+import 'package:map_bloc_teste/external/datasource/map_datasource.dart';
 import 'package:map_bloc_teste/domain/errors/failure.dart';
 
 
 class LocationsRepositoryImpl extends ILocationsRepository{
-  final MapaDataSource _mapDataSourceImpl;
+  final MapDataSource _mapDataSourceImpl;
 
   LocationsRepositoryImpl(this._mapDataSourceImpl);
 
